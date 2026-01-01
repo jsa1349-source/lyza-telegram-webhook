@@ -1,8 +1,17 @@
+import express from "express";
+import axios from "axios";
+
+const app = express();
+
+// ✅ JSON + UTF-8 안전 처리
+app.use(express.json({ limit: "1mb" }));
+
+// ===== TradingView Webhook =====
 app.post("/webhook", async (req, res) => {
   try {
     const body = req.body;
 
-    // TradingView message 우선
+    // 🔔 TradingView → Telegram 메시지
     const text =
       body.message ||
       body.text ||
@@ -11,14 +20,34 @@ app.post("/webhook", async (req, res) => {
     const token = process.env.BOT_TOKEN;
     const chatId = process.env.CHAT_ID;
 
-    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id: chatId,
-      text: text
-    });
+    await axios.post(
+      https://api.telegram.org/bot${token}/sendMessage,
+      {
+        chat_id: chatId,
+        text: text,
+        parse_mode: "HTML", // 한글/이모지 안정
+      },
+      {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+      }
+    );
 
-    res.status(200).send("ok");
+    return res.status(200).send("ok");
   } catch (e) {
-    console.error(e);
-    res.status(500).send("error");
+    console.error("Webhook error:", e);
+    return res.status(500).send("error");
   }
+});
+
+// ===== Health Check =====
+app.get("/", (req, res) => {
+  res.send("alive");
+});
+
+// ===== Server =====
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log("🚀 Server listening on port", port);
 });
