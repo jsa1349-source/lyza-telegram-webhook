@@ -1,36 +1,29 @@
 import express from "express";
-import fetch from "node-fetch";
+import axios from "axios";
 
 const app = express();
 app.use(express.json());
 
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const CHAT_ID   = process.env.CHAT_ID;
-
 app.post("/webhook", async (req, res) => {
   try {
-    const body = req.body;
-    const text =
-      typeof body === "string"
-        ? body
-        : body.message
-        ? body.message
-        : JSON.stringify(body);
+    const text = req.body?.text || JSON.stringify(req.body);
 
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: text,
-        disable_web_page_preview: true
-      })
+    const token = process.env.BOT_TOKEN;
+    const chatId = process.env.CHAT_ID;
+
+    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text: text
     });
 
-    res.json({ ok: true });
+    return res.status(200).send("ok");
   } catch (e) {
-    res.status(500).json({ ok: false });
+    console.error(e);
+    return res.status(500).send("error");
   }
 });
 
-app.listen(3000, () => console.log("Webhook server running"));
+app.get("/", (req, res) => res.send("alive"));
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log("listening:", port));
