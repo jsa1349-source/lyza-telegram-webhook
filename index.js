@@ -1,12 +1,12 @@
-import express from "express";
-import axios from "axios";
-
-const app = express();
-app.use(express.json());
-
 app.post("/webhook", async (req, res) => {
   try {
-    const text = req.body?.text || JSON.stringify(req.body);
+    const body = req.body;
+
+    // TradingView message 우선
+    const text =
+      body.message ||
+      body.text ||
+      📡 TradingView Alert\n${JSON.stringify(body, null, 2)};
 
     const token = process.env.BOT_TOKEN;
     const chatId = process.env.CHAT_ID;
@@ -16,14 +16,9 @@ app.post("/webhook", async (req, res) => {
       text: text
     });
 
-    return res.status(200).send("ok");
+    res.status(200).send("ok");
   } catch (e) {
     console.error(e);
-    return res.status(500).send("error");
+    res.status(500).send("error");
   }
 });
-
-app.get("/", (req, res) => res.send("alive"));
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("listening:", port));
